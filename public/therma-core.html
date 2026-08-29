@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#07110f">
+  <title>THERMA / Personalized Heat-Strain Wearable</title>
+  <meta name="description" content="Interactive Three.js prototype of a screenless personalized heat-strain and recovery wearable.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script type="importmap">
+    {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+  </script>
+  <style>
+    :root {
+      --bg:#07110f; --panel:rgba(9,24,21,.82); --line:rgba(200,255,226,.12);
+      --ink:#edf8f2; --muted:#8aa89a; --green:#67f1a7; --lime:#b9f26d;
+      --amber:#ffb64d; --red:#ff5e57; --cyan:#73e5e2; --mono:'IBM Plex Mono',monospace;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif}
+    body:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 42%,rgba(32,109,77,.19),transparent 37%),linear-gradient(rgba(103,241,167,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(103,241,167,.022) 1px,transparent 1px);background-size:auto,48px 48px,48px 48px;z-index:0}
+    #scene{position:fixed;inset:0;z-index:1}
+    .hud{position:fixed;inset:0;z-index:5;pointer-events:none;padding:24px;display:grid;grid-template-columns:minmax(280px,360px) 1fr 330px;grid-template-rows:auto 1fr auto;gap:18px}
+    .brand{grid-column:1/3;align-self:start;padding-left:14px;border-left:2px solid var(--green)}
+    .eyebrow,.kicker{font:600 10px/1.3 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--green)}
+    h1{font-size:clamp(26px,3.2vw,48px);line-height:.92;letter-spacing:-.055em;margin:7px 0 8px;max-width:670px}
+    .brand p{margin:0;color:var(--muted);font:400 11px/1.6 var(--mono);letter-spacing:.06em}
+    .panel{background:var(--panel);border:1px solid var(--line);box-shadow:0 18px 60px rgba(0,0,0,.25);backdrop-filter:blur(18px);border-radius:16px;pointer-events:auto}
+    .telemetry{grid-column:3;grid-row:1/3;padding:16px;align-self:start;max-height:calc(100vh - 122px);overflow:auto}
+    .panel-head{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid var(--line)}
+    .panel-title{font:600 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+    .live{display:flex;align-items:center;gap:6px;font:600 9px var(--mono);color:var(--green)}
+    .live:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green);animation:pulse 1.5s infinite}
+    @keyframes pulse{50%{opacity:.35}}
+    .state-card{margin:14px 0 8px;border-radius:12px;padding:14px;background:linear-gradient(135deg,rgba(255,182,77,.12),rgba(255,94,87,.06));border:1px solid rgba(255,182,77,.25)}
+    .state-row{display:flex;justify-content:space-between;align-items:flex-end}
+    .state-label{font:500 9px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--amber)}
+    .state-name{font-size:23px;font-weight:700;letter-spacing:-.03em;margin-top:3px;color:var(--amber)}
+    .score{font:600 25px var(--mono);color:var(--ink)} .score small{font-size:10px;color:var(--muted)}
+    .bar{height:4px;background:rgba(255,255,255,.08);border-radius:9px;margin-top:12px;overflow:hidden}.bar i{display:block;width:68%;height:100%;background:linear-gradient(90deg,var(--green),var(--amber),var(--red));box-shadow:0 0 12px var(--amber);transition:width .6s ease}
+    .metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:10px}
+    .metric{background:rgba(8,20,18,.96);padding:11px}.metric label{display:block;color:var(--muted);font:500 8px var(--mono);letter-spacing:.08em;text-transform:uppercase}.metric strong{display:block;font:600 16px var(--mono);margin-top:5px}.metric strong em{font-size:9px;color:var(--muted);font-style:normal;font-weight:400}
+    .chart-wrap{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:11px;background:rgba(3,10,8,.4)}
+    .chart-head{display:flex;justify-content:space-between;font:500 8px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}.legend{display:flex;gap:10px}.legend b{font-weight:500}.legend b:first-child{color:var(--green)}.legend b:last-child{color:var(--amber)}
+    canvas#recovery{display:block;width:100%;height:76px}
+    .flow{display:flex;align-items:center;gap:4px;margin-top:13px;overflow:hidden}.flow span{flex:1;min-width:0;padding:7px 2px;border:1px solid var(--line);border-radius:7px;text-align:center;font:500 7px var(--mono);color:#6f8a7e;text-transform:uppercase;white-space:nowrap}.flow span.active{color:var(--amber);border-color:rgba(255,182,77,.45);background:rgba(255,182,77,.08)}.flow i{width:5px;height:1px;background:var(--line)}
+    .story{grid-column:1;grid-row:2;align-self:end;margin-bottom:58px;padding:15px 16px;max-width:340px}
+    .story p{font-size:13px;line-height:1.48;color:#b8cfc4;margin:8px 0 0}.story strong{color:var(--ink)}
+    .callout{position:fixed;transform:translate(-50%,-50%);z-index:8;pointer-events:auto}
+    .dot{width:9px;height:9px;border:2px solid var(--green);background:#0a1713;border-radius:50%;box-shadow:0 0 13px rgba(103,241,167,.7);cursor:pointer;transition:.2s}
+    .callout:hover .dot{transform:scale(1.5);background:var(--green)}
+    .callout-card{position:absolute;left:16px;top:-14px;width:210px;padding:10px 12px;border:1px solid rgba(103,241,167,.28);background:rgba(6,16,13,.94);border-radius:9px;opacity:0;transform:translateX(-7px);transition:.2s;pointer-events:none}
+    .callout:hover .callout-card{opacity:1;transform:none}.callout-card b{font:600 10px var(--mono);color:var(--green);text-transform:uppercase}.callout-card p{font-size:11px;line-height:1.45;color:#a8c1b5;margin:5px 0 0}
+    .controls{grid-column:1/4;grid-row:3;align-self:end;justify-self:center;display:flex;gap:6px;padding:6px;background:rgba(5,14,11,.82);border:1px solid var(--line);border-radius:13px;backdrop-filter:blur(15px);pointer-events:auto}
+    button{border:1px solid transparent;background:transparent;color:var(--muted);font:600 9px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:10px 12px;border-radius:8px;cursor:pointer;transition:.18s}button:hover{color:var(--ink);background:rgba(255,255,255,.05)}button.active{background:rgba(103,241,167,.11);border-color:rgba(103,241,167,.3);color:var(--green)}button.action{color:var(--ink);background:#163229}
+    .spec{position:fixed;right:24px;bottom:24px;z-index:6;font:500 8px var(--mono);color:#668075;letter-spacing:.1em;text-transform:uppercase;pointer-events:none}
+    .mobile-note{display:none}
+    @media(max-width:900px){.hud{padding:14px;display:block}.brand{max-width:70%}.brand p{display:none}.telemetry{position:absolute;right:14px;top:14px;width:245px;max-height:48vh}.story{position:absolute;left:14px;bottom:52px;width:270px;margin:0}.metric-grid{grid-template-columns:1fr 1fr}.flow{display:none}.controls{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 20px);overflow-x:auto}.spec{display:none}}
+    @media(max-width:640px){.brand{max-width:100%}h1{font-size:25px;max-width:290px}.telemetry{top:auto;bottom:74px;left:12px;right:12px;width:auto;max-height:190px}.state-card{margin-top:9px}.metric-grid,.chart-wrap{display:none}.story{display:none}.controls button{padding:9px 8px;font-size:8px}.mobile-note{display:block;position:fixed;top:90px;left:15px;z-index:6;color:var(--muted);font:500 8px var(--mono);text-transform:uppercase;letter-spacing:.1em}}
+  </style>
+</head>
+<body>
+  <div id="scene"></div>
+  <div class="mobile-note">Drag to rotate · pinch to zoom</div>
+  <main class="hud">
+    <header class="brand">
+      <div class="eyebrow">5-Day Build / Edge-AI Hardware Concept</div>
+      <h1>Personal heat strain,<br>made visible.</h1>
+      <p>THERMA CORE · SCREENLESS PHYSIOLOGICAL DISTRESS + RECOVERY WEARABLE</p>
+    </header>
+
+    <section class="panel telemetry" aria-label="Live physiological telemetry">
+      <div class="panel-head"><span class="panel-title">Personal Twin / Live</span><span class="live">EDGE LINK</span></div>
+      <div class="state-card" id="state-card">
+        <div class="state-row"><div><div class="state-label">Current state</div><div class="state-name" id="state-name">Abnormal strain</div></div><div class="score"><span id="score">68</span><small>/100</small></div></div>
+        <div class="bar"><i id="score-bar"></i></div>
+      </div>
+      <div class="metric-grid">
+        <div class="metric"><label>Heart rate</label><strong><span id="hr">105</span> <em>BPM</em></strong></div>
+        <div class="metric"><label>HRV · RMSSD</label><strong><span id="hrv">23</span> <em>MS</em></strong></div>
+        <div class="metric"><label>Skin temp</label><strong><span id="skin">37.1</span> <em>°C</em></strong></div>
+        <div class="metric"><label>Ambient</label><strong><span id="ambient">39.4</span> <em>°C</em></strong></div>
+        <div class="metric"><label>Humidity</label><strong><span id="humidity">71</span> <em>%RH</em></strong></div>
+        <div class="metric"><label>Activity</label><strong><span id="activity">LOW</span></strong></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-head"><span>Recovery after cooling</span><span class="legend"><b>Expected</b><b>Actual</b></span></div>
+        <canvas id="recovery" width="290" height="76"></canvas>
+      </div>
+      <div class="flow"><span>Normal</span><i></i><span>Exposure</span><i></i><span class="active">Strain</span><i></i><span>Recovery</span><i></i><span>Delayed</span></div>
+    </section>
+
+    <aside class="panel story">
+      <div class="kicker">Why it is not a smartwatch</div>
+      <p><strong>No screen. No notifications. No generic heat index.</strong> A low-profile sensing core learns the wearer’s normal response and checks whether recovery after cooling is actually on track.</p>
+    </aside>
+
+    <nav class="controls" aria-label="3D model controls">
+      <button id="rotate" class="active">Auto rotate</button>
+      <button id="explode">Explode core</button>
+      <button id="xray">X-ray</button>
+      <button id="scenario" class="action">Run scenario</button>
+      <button id="capture" aria-label="Save a screenshot">Capture</button>
+    </nav>
+  </main>
+  <div class="spec">38 × 24 × 9 mm core · ~26 g · 48 h concept runtime</div>
+  <div id="labels"></div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+    import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+    const state={rotate:true,exploded:false,xray:false,scenario:false,phase:2};
+    const scene=new THREE.Scene();
+    scene.background=new THREE.Color(0x07110f);
+    scene.fog=new THREE.FogExp2(0x07110f,.055);
+    const camera=new THREE.PerspectiveCamera(34,innerWidth/innerHeight,.1,100);
+    camera.position.set(5.6,3.6,7.8);
+    const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+    renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+    document.getElementById('scene').appendChild(renderer.domElement);
+    const composer=new EffectComposer(renderer);composer.addPass(new RenderPass(scene,camera));const bloom=new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.55,.7,.72);composer.addPass(bloom);composer.addPass(new OutputPass());
+    scene.add(new THREE.HemisphereLight(0xbaffd8,0x06100c,1.8));
+    const key=new THREE.DirectionalLight(0xfff1d2,4.2);key.position.set(-5,7,5);key.castShadow=true;key.shadow.mapSize.set(2048,2048);scene.add(key);
+    const rim=new THREE.SpotLight(0x54f5a0,22,25,.65,.7);rim.position.set(4,4,-6);scene.add(rim);
+    const warm=new THREE.PointLight(0xff6d45,8,10);warm.position.set(-3,1,3);scene.add(warm);
+    const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.06;controls.minDistance=4;controls.maxDistance=13;controls.target.set(0,.25,0);controls.maxPolarAngle=Math.PI*.82;
+
+    const root=new THREE.Group();root.rotation.set(-.18,.15,-.08);scene.add(root);
+    const explodables={}; const origins={};
+    const fabric=new THREE.MeshPhysicalMaterial({color:0x15251e,roughness:.94,metalness:0,clearcoat:.08,sheen:1,sheenColor:new THREE.Color(0x346a50)});
+    const fabricEdge=new THREE.MeshStandardMaterial({color:0x263b31,roughness:.9});
+    const shell=new THREE.MeshPhysicalMaterial({color:0x18251f,roughness:.36,metalness:.3,clearcoat:.8,clearcoatRoughness:.22});
+    const shellX=new THREE.MeshPhysicalMaterial({color:0x5fe7a1,transparent:true,opacity:.13,roughness:.2,metalness:.1,side:THREE.DoubleSide,depthWrite:false});
+    const black=new THREE.MeshStandardMaterial({color:0x050807,roughness:.58,metalness:.45});
+    const pcbMat=new THREE.MeshStandardMaterial({color:0x0d6142,roughness:.55,metalness:.15});
+    const chipMat=new THREE.MeshStandardMaterial({color:0x17211d,roughness:.28,metalness:.65});
+    const copper=new THREE.MeshStandardMaterial({color:0xd68b3b,roughness:.35,metalness:.8});
+    const sensorMat=new THREE.MeshPhysicalMaterial({color:0x190a0d,roughness:.18,metalness:.2,clearcoat:1});
+    const redLed=new THREE.MeshStandardMaterial({color:0xff2f50,emissive:0xff153b,emissiveIntensity:2.6});
+    const greenLed=new THREE.MeshStandardMaterial({color:0x64ffb1,emissive:0x43ff9a,emissiveIntensity:2.6});
+    const statusMat=new THREE.MeshStandardMaterial({color:0xffa62e,emissive:0xff8a18,emissiveIntensity:3});
+    const batteryMat=new THREE.MeshPhysicalMaterial({color:0xc8d1ca,roughness:.28,metalness:.78});
+
+    function rounded(w,h,d,r=.08,mat=shell){const m=new THREE.Mesh(new RoundedBoxGeometry(w,h,d,6,r),mat);m.castShadow=true;m.receiveShadow=true;return m}
+    function curveTube(points,radius,mat,segments=80){const curve=new THREE.CatmullRomCurve3(points);return new THREE.Mesh(new THREE.TubeGeometry(curve,segments,radius,12,false),mat)}
+
+    // Textile strap: visibly continuous, screenless and narrower than a watch.
+    const strapL=curveTube([new THREE.Vector3(-.55,.0,0),new THREE.Vector3(-1.8,-.1,.05),new THREE.Vector3(-3,-.55,-.15),new THREE.Vector3(-3.75,-1.35,-.35)],.37,fabric);
+    const strapR=curveTube([new THREE.Vector3(.55,.0,0),new THREE.Vector3(1.8,-.1,.05),new THREE.Vector3(3,-.55,-.15),new THREE.Vector3(3.75,-1.35,-.35)],.37,fabric);
+    strapL.scale.z=.48;strapR.scale.z=.48;strapL.castShadow=strapR.castShadow=true;root.add(strapL,strapR);
+    for(let side of [-1,1]){for(let i=0;i<13;i++){const x=side*(.7+i*.23);const stitch=new THREE.Mesh(new THREE.BoxGeometry(.09,.012,.51),fabricEdge);stitch.position.set(x,-.018,.02-Math.abs(x)*.024);stitch.rotation.z=side*.045*i;root.add(stitch)}}
+    const clasp=rounded(.48,.3,.55,.09,new THREE.MeshStandardMaterial({color:0x7b8e84,metalness:.75,roughness:.3}));clasp.position.set(3.55,-1.23,-.3);clasp.rotation.z=-.58;root.add(clasp);
+
+    // Screenless sensor core enclosure.
+    const pod=new THREE.Group();root.add(pod);
+    const topShell=rounded(2.25,.38,1.42,.25,shell);topShell.position.y=.28;pod.add(topShell);explodables.shell=topShell;
+    const seam=rounded(2.08,.055,1.27,.2,new THREE.MeshStandardMaterial({color:0x31483d,roughness:.5,metalness:.35}));seam.position.y=.05;pod.add(seam);
+    const lower=rounded(2.13,.34,1.31,.22,black);lower.position.y=-.16;pod.add(lower);explodables.lower=lower;
+    const ridgeGeo=new RoundedBoxGeometry(1.48,.035,.09,4,.03);
+    for(let i=0;i<5;i++){const ridge=new THREE.Mesh(ridgeGeo,i===2?statusMat:new THREE.MeshStandardMaterial({color:0x2c4036,roughness:.45,metalness:.25}));ridge.position.set(0,.49,-.28+i*.14);pod.add(ridge)}
+    const wordCanvas=document.createElement('canvas');wordCanvas.width=512;wordCanvas.height=128;const wc=wordCanvas.getContext('2d');wc.clearRect(0,0,512,128);wc.fillStyle='#bde8d0';wc.font='600 42px IBM Plex Mono';wc.textAlign='center';wc.fillText('THERMA / CORE',256,76);const wordTex=new THREE.CanvasTexture(wordCanvas);const word=new THREE.Sprite(new THREE.SpriteMaterial({map:wordTex,transparent:true,opacity:.7,depthTest:false}));word.scale.set(1.35,.34,1);word.position.set(0,.515,.22);pod.add(word);
+
+    // Optical underside, contact temperature and charge pins.
+    const optical=new THREE.Group();const opticalBase=new THREE.Mesh(new THREE.CylinderGeometry(.38,.43,.12,48),sensorMat);opticalBase.position.y=-.4;optical.add(opticalBase);
+    for(const [x,z,mat] of [[0,0,greenLed],[-.16,.03,redLed],[.16,.03,redLed]]){const led=new THREE.Mesh(new THREE.CircleGeometry(.075,24),mat);led.rotation.x=Math.PI/2;led.position.set(x,-.466,z);optical.add(led)}
+    const temp=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,.06,24),copper);temp.position.set(.58,-.39,.18);optical.add(temp);
+    for(let i=0;i<2;i++){const pin=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.06,16),copper);pin.position.set(-.66+i*.15,-.4,.19);optical.add(pin)}
+    pod.add(optical);explodables.sensors=optical;
+
+    // Internal electronics.
+    const internals=new THREE.Group();pod.add(internals);explodables.pcb=internals;
+    const pcb=rounded(1.86,.06,1.02,.12,pcbMat);pcb.position.y=.0;internals.add(pcb);
+    const esp=rounded(.45,.09,.43,.035,chipMat);esp.position.set(.27,.08,-.05);internals.add(esp);esp.userData.name='ESP32-S3';
+    const ppg=rounded(.28,.08,.25,.03,new THREE.MeshStandardMaterial({color:0x31141d,metalness:.5,roughness:.25}));ppg.position.set(-.42,.08,.18);internals.add(ppg);
+    const imu=rounded(.19,.075,.19,.025,chipMat);imu.position.set(-.5,.08,-.25);internals.add(imu);
+    const env=rounded(.16,.07,.16,.02,new THREE.MeshStandardMaterial({color:0xd6a94d,metalness:.4,roughness:.35}));env.position.set(.72,.08,.23);internals.add(env);
+    const haptic=new THREE.Mesh(new THREE.CylinderGeometry(.19,.19,.09,30),new THREE.MeshStandardMaterial({color:0xa9b2ad,metalness:.8,roughness:.24}));haptic.rotation.z=Math.PI/2;haptic.position.set(-.72,.07,.02);internals.add(haptic);
+    const battery=rounded(1.25,.15,.72,.1,batteryMat);battery.position.set(.12,-.14,0);internals.add(battery);explodables.battery=battery;
+    for(let i=-3;i<=3;i++){const trace=new THREE.Mesh(new THREE.BoxGeometry(1.45,.012,.012),copper);trace.position.set(0,.045,i*.105);trace.material=copper;internals.add(trace)}
+
+    // Textile retention wings make it read as a performance band, not a watch.
+    for(let side of [-1,1]){const wing=rounded(.5,.23,1.18,.16,new THREE.MeshPhysicalMaterial({color:0x24362d,roughness:.78,metalness:.08}));wing.position.x=side*1.27;wing.position.y=.02;root.add(wing)}
+
+    // Platform.
+    const platform=new THREE.Mesh(new THREE.CylinderGeometry(3.5,3.85,.22,80),new THREE.MeshPhysicalMaterial({color:0x0a1511,metalness:.55,roughness:.45}));platform.position.y=-1.82;platform.receiveShadow=true;scene.add(platform);
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(3.05,.012,8,96),greenLed);ring.rotation.x=Math.PI/2;ring.position.y=-1.695;scene.add(ring);
+    const grid=new THREE.GridHelper(30,60,0x265b42,0x10251c);grid.position.y=-1.94;grid.material.transparent=true;grid.material.opacity=.15;scene.add(grid);
+
+    const explodeTargets={shell:new THREE.Vector3(0,1.45,0),lower:new THREE.Vector3(0,-1.0,0),sensors:new THREE.Vector3(0,-1.6,0),pcb:new THREE.Vector3(0,.5,0),battery:new THREE.Vector3(0,-.45,0)};
+    Object.entries(explodables).forEach(([k,o])=>origins[k]=o.position.clone());
+    function explode(on){const start=performance.now();function tick(now){let t=Math.min(1,(now-start)/900);t=t*t*(3-2*t);Object.entries(explodeTargets).forEach(([k,target])=>explodables[k].position.lerpVectors(on?origins[k]:target,on?target:origins[k],t));if(t<1)requestAnimationFrame(tick)}requestAnimationFrame(tick)}
+    function setXray(on){topShell.material=on?shellX:shell;lower.material=on?shellX:black;seam.visible=!on;internals.visible=true}
+
+    const callouts=[
+      {target:topShell,title:'Screenless sensing core',body:'Low-profile 38 × 24 mm module. A tactile ridge and RGB status glow replace a watch display.',offset:[0,.85,0]},
+      {target:optical,title:'MAX30102 + TMP117',body:'Skin-contact PPG captures heart rate and HRV while the thermal contact tracks skin temperature.',offset:[.3,-.2,.1]},
+      {target:strapL,title:'Breathable textile band',body:'Soft, adjustable, and continuous—designed as an always-on safety sensor rather than a mini phone.',offset:[-.4,.35,0]},
+      {target:internals,title:'ESP32-S3 edge AI',body:'Fuses physiology, environment, activity, exposure time, and the user’s own baseline locally.',offset:[.45,.45,0]}
+    ];
+    const labelNodes=[];callouts.forEach(c=>{const el=document.createElement('div');el.className='callout';el.innerHTML=`<div class="dot"></div><div class="callout-card"><b>${c.title}</b><p>${c.body}</p></div>`;document.getElementById('labels').appendChild(el);labelNodes.push({...c,el})});
+    const scratch=new THREE.Vector3();function updateLabels(){labelNodes.forEach(l=>{l.target.getWorldPosition(scratch);scratch.add(new THREE.Vector3(...l.offset));scratch.project(camera);l.el.style.left=`${(scratch.x*.5+.5)*innerWidth}px`;l.el.style.top=`${(-scratch.y*.5+.5)*innerHeight}px`;l.el.style.opacity=scratch.z<1?'1':'0'})}
+
+    const phases=[
+      {name:'Baseline normal',score:18,hr:74,hrv:51,skin:33.2,ambient:29.0,humidity:56,activity:'LOW',color:'#67f1a7'},
+      {name:'Heat exposure',score:43,hr:91,hrv:37,skin:35.8,ambient:39.4,humidity:71,activity:'WALK',color:'#b9f26d'},
+      {name:'Abnormal strain',score:68,hr:105,hrv:23,skin:37.1,ambient:39.4,humidity:71,activity:'LOW',color:'#ffb64d'},
+      {name:'Cooling / recovery',score:49,hr:92,hrv:31,skin:35.6,ambient:27.0,humidity:54,activity:'REST',color:'#73e5e2'},
+      {name:'Delayed recovery',score:76,hr:99,hrv:24,skin:36.2,ambient:27.0,humidity:54,activity:'REST',color:'#ff5e57'}
+    ];
+    function showPhase(i){state.phase=i;const p=phases[i];document.getElementById('state-name').textContent=p.name;document.getElementById('score').textContent=p.score;document.getElementById('score-bar').style.width=p.score+'%';document.getElementById('hr').textContent=p.hr;document.getElementById('hrv').textContent=p.hrv;document.getElementById('skin').textContent=p.skin.toFixed(1);document.getElementById('ambient').textContent=p.ambient.toFixed(1);document.getElementById('humidity').textContent=p.humidity;document.getElementById('activity').textContent=p.activity;document.querySelector('.state-name').style.color=p.color;document.querySelector('.state-label').style.color=p.color;document.querySelectorAll('.flow span').forEach((el,n)=>el.classList.toggle('active',n===i));statusMat.color.set(p.color);statusMat.emissive.set(p.color);drawRecovery(i)}
+    const cv=document.getElementById('recovery'),ctx=cv.getContext('2d');
+    function drawRecovery(phase=2){const w=cv.width,h=cv.height;ctx.clearRect(0,0,w,h);ctx.strokeStyle='rgba(255,255,255,.07)';ctx.lineWidth=1;for(let y=14;y<h;y+=20){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}const expected=[65,55,45,36,28,21,16,12], actual=phase===4?[65,61,58,54,51,47,43,39]:[65,58,49,41,34,27,21,16];function path(data,color,dash=[]){ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2;ctx.setLineDash(dash);data.forEach((v,i)=>{const x=i*w/(data.length-1),y=5+v*.88;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();ctx.setLineDash([])}path(expected,'#67f1a7',[4,3]);path(actual,phase===4?'#ff5e57':'#ffb64d')}
+    showPhase(2);
+
+    document.getElementById('rotate').onclick=e=>{state.rotate=!state.rotate;e.currentTarget.classList.toggle('active',state.rotate)};
+    document.getElementById('explode').onclick=e=>{state.exploded=!state.exploded;explode(state.exploded);e.currentTarget.classList.toggle('active',state.exploded);e.currentTarget.textContent=state.exploded?'Assemble':'Explode core'};
+    document.getElementById('xray').onclick=e=>{state.xray=!state.xray;setXray(state.xray);e.currentTarget.classList.toggle('active',state.xray);e.currentTarget.textContent=state.xray?'Solid view':'X-ray'};
+    let scenarioTimer;document.getElementById('scenario').onclick=e=>{clearInterval(scenarioTimer);state.scenario=!state.scenario;e.currentTarget.classList.toggle('active',state.scenario);e.currentTarget.textContent=state.scenario?'Stop scenario':'Run scenario';if(state.scenario){let i=-1;const advance=()=>{i=(i+1)%phases.length;showPhase(i)};advance();scenarioTimer=setInterval(advance,2200)}};
+    document.getElementById('capture').onclick=()=>{composer.render();const a=document.createElement('a');a.download='therma-core-3d.png';a.href=renderer.domElement.toDataURL('image/png');a.click()};
+
+    const clock=new THREE.Clock();function animate(){requestAnimationFrame(animate);const dt=clock.getDelta(),t=clock.elapsedTime;controls.update();if(state.rotate)root.rotation.y+=dt*.12;statusMat.emissiveIntensity=2.2+Math.sin(t*3)*1.4;greenLed.emissiveIntensity=2.1+Math.sin(t*4)*1.2;redLed.emissiveIntensity=2.2+Math.sin(t*4+1)*1.1;ring.material.emissiveIntensity=.8+Math.sin(t*1.4)*.35;updateLabels();composer.render()}animate();
+    addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight)});
+  </script>
+</body>
+</html>
