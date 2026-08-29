@@ -54,7 +54,7 @@
     .callout-card{position:absolute;left:16px;top:-14px;width:210px;padding:10px 12px;border:1px solid rgba(103,241,167,.28);background:rgba(6,16,13,.94);border-radius:9px;opacity:0;transform:translateX(-7px);transition:.2s;pointer-events:none}
     .callout:hover .callout-card{opacity:1;transform:none}.callout-card b{font:600 10px var(--mono);color:var(--green);text-transform:uppercase}.callout-card p{font-size:11px;line-height:1.45;color:#a8c1b5;margin:5px 0 0}
     .controls{grid-column:1/4;grid-row:3;align-self:end;justify-self:center;display:flex;gap:6px;padding:6px;background:rgba(5,14,11,.82);border:1px solid var(--line);border-radius:13px;backdrop-filter:blur(15px);pointer-events:auto}
-    button{border:1px solid transparent;background:transparent;color:var(--muted);font:600 9px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:10px 12px;border-radius:8px;cursor:pointer;transition:.18s}button:hover{color:var(--ink);background:rgba(255,255,255,.05)}button.active{background:rgba(103,241,167,.11);border-color:rgba(103,241,167,.3);color:var(--green)}button.action{color:var(--ink);background:#163229}
+    button,.app-link{border:1px solid transparent;background:transparent;color:var(--muted);font:600 9px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:10px 12px;border-radius:8px;cursor:pointer;transition:.18s;text-decoration:none}button:hover,.app-link:hover{color:var(--ink);background:rgba(255,255,255,.05)}button.active{background:rgba(103,241,167,.11);border-color:rgba(103,241,167,.3);color:var(--green)}button.action,.app-link{color:var(--ink);background:#163229}
     .spec{position:fixed;right:24px;bottom:24px;z-index:6;font:500 8px var(--mono);color:#668075;letter-spacing:.1em;text-transform:uppercase;pointer-events:none}
     .mobile-note{display:none}
     @media(max-width:900px){.hud{padding:14px;display:block}.brand{max-width:70%}.brand p{display:none}.telemetry{position:absolute;right:14px;top:14px;width:245px;max-height:48vh}.story{position:absolute;left:14px;bottom:52px;width:270px;margin:0}.metric-grid{grid-template-columns:1fr 1fr}.flow{display:none}.controls{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 20px);overflow-x:auto}.spec{display:none}}
@@ -102,6 +102,7 @@
       <button id="explode">Explode core</button>
       <button id="xray">X-ray</button>
       <button id="scenario" class="action">Run scenario</button>
+      <a class="app-link" href="/mobile">Mobile twin</a>
       <button id="capture" aria-label="Save a screenshot">Capture</button>
     </nav>
   </main>
