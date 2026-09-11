@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#07110f">
-  <title>THERMA / Personalized Heat-Strain Wearable</title>
+  <title>RESILIO / Personalized Heat-Strain Wearable</title>
   <meta name="description" content="Interactive Three.js prototype of a screenless personalized heat-strain and recovery wearable.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -70,7 +70,7 @@
     <header class="brand">
       <div class="eyebrow">5-Day Build / Edge-AI Hardware Concept</div>
       <h1>Personal heat strain,<br>made visible.</h1>
-      <p>THERMA CORE · SCREENLESS PHYSIOLOGICAL DISTRESS + RECOVERY WEARABLE</p>
+      <p>RESILIO CORE · SCREENLESS PHYSIOLOGICAL DISTRESS + RECOVERY WEARABLE</p>
     </header>
 
     <section class="panel telemetry" aria-label="Live physiological telemetry">
@@ -169,7 +169,7 @@
     const lower=rounded(2.13,.34,1.31,.22,black);lower.position.y=-.16;pod.add(lower);explodables.lower=lower;
     const ridgeGeo=new RoundedBoxGeometry(1.48,.035,.09,4,.03);
     for(let i=0;i<5;i++){const ridge=new THREE.Mesh(ridgeGeo,i===2?statusMat:new THREE.MeshStandardMaterial({color:0x2c4036,roughness:.45,metalness:.25}));ridge.position.set(0,.49,-.28+i*.14);pod.add(ridge)}
-    const wordCanvas=document.createElement('canvas');wordCanvas.width=512;wordCanvas.height=128;const wc=wordCanvas.getContext('2d');wc.clearRect(0,0,512,128);wc.fillStyle='#bde8d0';wc.font='600 42px IBM Plex Mono';wc.textAlign='center';wc.fillText('THERMA / CORE',256,76);const wordTex=new THREE.CanvasTexture(wordCanvas);const word=new THREE.Sprite(new THREE.SpriteMaterial({map:wordTex,transparent:true,opacity:.7,depthTest:false}));word.scale.set(1.35,.34,1);word.position.set(0,.515,.22);pod.add(word);
+    const wordCanvas=document.createElement('canvas');wordCanvas.width=512;wordCanvas.height=128;const wc=wordCanvas.getContext('2d');wc.clearRect(0,0,512,128);wc.fillStyle='#bde8d0';wc.font='600 42px IBM Plex Mono';wc.textAlign='center';wc.fillText('RESILIO / CORE',256,76);const wordTex=new THREE.CanvasTexture(wordCanvas);const word=new THREE.Sprite(new THREE.SpriteMaterial({map:wordTex,transparent:true,opacity:.7,depthTest:false}));word.scale.set(1.35,.34,1);word.position.set(0,.515,.22);pod.add(word);
 
     // Optical underside, contact temperature and charge pins.
     const optical=new THREE.Group();const opticalBase=new THREE.Mesh(new THREE.CylinderGeometry(.38,.43,.12,48),sensorMat);opticalBase.position.y=-.4;optical.add(opticalBase);

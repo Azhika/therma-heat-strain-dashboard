@@ -4,7 +4,7 @@ export default function Home() {
       <iframe
         className="prototype-frame"
         src="/therma-core.html"
-        title="THERMA personalized heat-strain wearable interactive 3D prototype"
+        title="RESILIO personalized heat-strain wearable interactive 3D prototype"
         allow="fullscreen"
       />
     </main>

@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.venv*/
+.env
+replay/
+*.xlsx
+*.csv
+
+# Training and inspection are retained locally but are not needed at runtime.
+train_*.py
+inspect_*.py
+ai_test.py
+predictor_real.py
+model_real.pkl
+model_multi_participant.pkl
+scaler_real.pkl
+scaler_multi_participant.pkl

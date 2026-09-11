@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { SensorPayload } from '@/lib/thermal-api';
-
-const PREDICT_ENDPOINT =
-  process.env.PREDICT_API_URL ?? 'http://127.0.0.1:8000/predict';
+import { backendApiUrl } from '@/lib/backend-api';
 
 function isSensorPayload(value: unknown): value is SensorPayload {
   if (!value || typeof value !== 'object') return false;
@@ -23,7 +21,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid sensor data' }, { status: 400 });
     }
 
-    const response = await fetch(PREDICT_ENDPOINT, {
+    const response = await fetch(backendApiUrl('/predict'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(sensorData),

@@ -1,16 +1,16 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Physiological Dashboard | THERMA',
+  title: 'Physiological Dashboard | RESILIO',
   description: 'A calm mobile view of personalized heat strain, physical readings, and recovery status.',
   openGraph: {
-    title: 'THERMA Physiological Dashboard',
+    title: 'RESILIO Physiological Dashboard',
     description: 'Personalized heat-strain and recovery monitoring in a simple mobile interface.',
     images: [],
   },
   twitter: {
     card: 'summary',
-    title: 'THERMA Physiological Dashboard',
+    title: 'RESILIO Physiological Dashboard',
     description: 'Personalized heat-strain and recovery monitoring in a simple mobile interface.',
     images: [],
   },

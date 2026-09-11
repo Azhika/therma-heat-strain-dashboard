@@ -36,12 +36,14 @@ function isPredictionResponse(value: unknown): value is PredictionResponse {
 // Demo buttons and future ESP32 updates both use this single request path.
 export async function requestHeatPrediction(
   sensorData: SensorPayload,
+  signal?: AbortSignal,
 ): Promise<PredictionResponse> {
   const response = await fetch('/api/predict', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(sensorData),
     cache: 'no-store',
+    signal,
   });
 
   if (!response.ok) throw new Error('Backend unavailable');
