@@ -207,19 +207,19 @@ export default function ThermalDashboard() {
             <strong>{aiDisplay}</strong>
             <p>{analysisState === 'error' ? 'Check that FastAPI is running on port 8000.' : analysisState === 'loading' ? 'Sending this sensor frame to the /predict model.' : aiResult ? 'Result returned by your local anomaly model.' : 'Choose a scenario to request a live prediction.'}</p>
           </div>
-          <div className={styles.apiReadings}>
-            <div><span>Heart rate</span><strong>{sensorFrame?.heart_rate ?? '—'}<small>bpm</small></strong></div>
-            <div><span>SpO2</span><strong>{sensorFrame?.spo2 ?? '—'}<small>%</small></strong></div>
-            <div><span>Temperature</span><strong>{sensorFrame?.temperature ?? '—'}<small>°C</small></strong></div>
-            <div><span>Humidity</span><strong>{sensorFrame?.humidity ?? '—'}<small>%</small></strong></div>
-            <div><span>Activity</span><strong>{sensorFrame?.activity ?? '—'}</strong></div>
-          </div>
           <div className={styles.aiActions}>
             <div className={styles.rawScore}><span>Raw anomaly score</span><strong>{aiResult ? String(aiResult.score) : '—'}</strong></div>
             <div className={styles.scenarioButtons}>
               <button disabled={analysisState === 'loading'} onClick={() => analyzeScenario(NORMAL_SCENARIO, 'baseline')}>Normal scenario</button>
               <button disabled={analysisState === 'loading'} onClick={() => analyzeScenario(ABNORMAL_SCENARIO, 'strain')}>Abnormal strain scenario</button>
             </div>
+          </div>
+          <div className={styles.apiReadings}>
+            <div><span>Heart rate</span><strong>{sensorFrame?.heart_rate ?? '—'}<small>bpm</small></strong></div>
+            <div><span>SpO2</span><strong>{sensorFrame?.spo2 ?? '—'}<small>%</small></strong></div>
+            <div><span>Temperature</span><strong>{sensorFrame?.temperature ?? '—'}<small>°C</small></strong></div>
+            <div><span>Humidity</span><strong>{sensorFrame?.humidity ?? '—'}<small>%</small></strong></div>
+            <div><span>Activity</span><strong>{sensorFrame?.activity ?? '—'}</strong></div>
           </div>
         </section>
 
