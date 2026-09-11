@@ -66,6 +66,28 @@
 .phaseBar button:hover { background: #f2f4f1; color: var(--ink); }
 .phaseBar .phaseActive { border-color: #d6dcd8; background: white; color: var(--ink); box-shadow: 0 4px 12px rgba(27,39,32,.08); }
 
+.aiPanel { display: grid; grid-template-columns: minmax(210px,.78fr) minmax(420px,1.55fr) minmax(250px,.9fr); align-items: center; gap: 18px; margin-bottom: 14px; padding: 18px 20px; border: 1px solid var(--line); border-left: 4px solid #aab3ad; border-radius: 18px; background: var(--paper); box-shadow: 0 12px 34px rgba(25,38,30,.045); }
+.aiPanel[data-state='normal'] { border-left-color: var(--green); }
+.aiPanel[data-state='abnormal'], .aiPanel[data-state='error'] { border-left-color: var(--red); }
+.aiPanel[data-state='loading'] { border-left-color: #d79424; }
+.aiResultCopy > span, .apiReadings span, .rawScore span { display: block; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.aiResultCopy strong { display: block; margin-top: 6px; font-size: 22px; letter-spacing: -.03em; }
+.aiPanel[data-state='normal'] .aiResultCopy strong { color: var(--green); }
+.aiPanel[data-state='abnormal'] .aiResultCopy strong, .aiPanel[data-state='error'] .aiResultCopy strong { color: var(--red); }
+.aiResultCopy p { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.apiReadings { display: grid; grid-template-columns: repeat(5,minmax(68px,1fr)); gap: 7px; }
+.apiReadings > div { min-width: 0; padding: 11px 10px; border-radius: 12px; background: #f3f5f2; }
+.apiReadings strong { display: block; margin-top: 5px; font-size: 16px; }
+.apiReadings small { margin-left: 3px; color: var(--muted); font-size: 9px; }
+.aiActions { display: grid; gap: 10px; }
+.rawScore { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.rawScore strong { font-family: Consolas, monospace; font-size: 16px; }
+.scenarioButtons { display: grid; grid-template-columns: 1fr 1.25fr; gap: 7px; }
+.scenarioButtons button { min-height: 39px; padding: 8px 10px; border: 1px solid #d8ded9; border-radius: 10px; background: white; color: var(--ink); font-size: 10px; font-weight: 900; text-transform: uppercase; cursor: pointer; transition: .18s ease; }
+.scenarioButtons button:last-child { border-color: #f0cfcb; color: #b7332a; }
+.scenarioButtons button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 5px 13px rgba(25,38,30,.08); }
+.scenarioButtons button:disabled { cursor: wait; opacity: .52; }
+
 .overviewGrid { display: grid; grid-template-columns: minmax(520px, 1.7fr) minmax(300px, .78fr); gap: 14px; }
 .twinPanel, .vitalsColumn, .recoveryStrip, .focusPanel, .guidancePanel, .hardwareViewport, .diagnosticsPanel { border: 1px solid var(--line); border-radius: 21px; background: var(--paper); box-shadow: 0 12px 34px rgba(25,38,30,.045); }
 .twinPanel { min-height: 535px; padding: 20px; }
@@ -214,6 +236,8 @@
   .bodyStage img { height: 335px; }
   .strainRegion { top: 85px; }
   .bodyCallout { top: 125px; right: 8%; }
+  .aiPanel { grid-template-columns: .75fr 1.25fr; }
+  .aiActions { grid-column: 1 / -1; grid-template-columns: .65fr 1.35fr; align-items: center; }
 }
 
 @media (max-width: 900px) {
@@ -226,6 +250,8 @@
   .deviceMini, .backLink { display: none; }
   .workspace { height: auto; min-height: calc(100dvh - 58px); overflow: visible; padding: 22px 16px 36px; }
   .overviewGrid, .focusGrid, .hardwareGrid { grid-template-columns: 1fr; }
+  .aiPanel { grid-template-columns: 1fr; }
+  .aiActions { grid-column: auto; grid-template-columns: 1fr; }
   .recoveryStrip { grid-template-columns: 1fr 1.5fr; }
   .recoveryScore { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 6px 14px; }
   .recoveryScore > div { grid-column: 1 / -1; }
@@ -239,6 +265,10 @@
   .phaseBar { align-items: flex-start; flex-direction: column; }
   .phaseBar > div { justify-content: flex-start; }
   .phaseBar button { padding: 8px 9px; font-size: 11px; }
+  .aiPanel { padding: 16px; }
+  .apiReadings { grid-template-columns: repeat(2,1fr); }
+  .apiReadings > div:last-child { grid-column: 1 / -1; }
+  .scenarioButtons { grid-template-columns: 1fr; }
   .twinPanel, .vitalsColumn, .recoveryStrip, .focusPanel, .guidancePanel, .hardwareViewport, .diagnosticsPanel { border-radius: 17px; }
   .twinContent { display: flex; flex-direction: column; }
   .scoreBlock { width: 100%; display: grid; grid-template-columns: 105px 1fr; align-items: center; gap: 14px; }

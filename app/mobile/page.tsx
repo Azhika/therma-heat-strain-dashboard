@@ -1,24 +1,43 @@
 'use client';
 
 import { type CSSProperties, useEffect, useMemo, useState } from 'react';
+import {
+  requestHeatPrediction,
+  type PredictionResponse,
+  type SensorPayload,
+} from '@/lib/thermal-api';
 import styles from './mobile.module.css';
 
 type PhaseKey = 'baseline' | 'exposure' | 'strain' | 'recovery' | 'delayed';
 type ViewKey = 'overview' | 'recovery' | 'hardware';
 
 const PHASES: Record<PhaseKey, {
-  label: string; status: string; score: number; hr: number; hrv: number; skin: number;
+  label: string; status: string; score: number; hr: number; hrv: number; spo2: number; skin: number;
   ambient: number; humidity: number; activity: string; exposure: number; recovery: number;
   message: string; trend: number[];
 }> = {
-  baseline: { label: 'Baseline', status: 'Within your normal range', score: 14, hr: 74, hrv: 52, skin: 33.1, ambient: 29.2, humidity: 54, activity: 'Resting', exposure: 4, recovery: 96, message: 'Your readings match your personal pattern.', trend: [72,73,72,74,73,74,74,73,74,74] },
-  exposure: { label: 'Heat exposure', status: 'Heat load is building', score: 41, hr: 88, hrv: 39, skin: 35.4, ambient: 39.4, humidity: 71, activity: 'Walking', exposure: 24, recovery: 72, message: 'Your body is compensating for the hotter environment.', trend: [76,79,80,82,81,84,86,85,87,88] },
-  strain: { label: 'Heat strain', status: 'Unusual strain detected', score: 68, hr: 105, hrv: 23, skin: 37.1, ambient: 39.4, humidity: 71, activity: 'Low activity', exposure: 42, recovery: 38, message: 'Your physiology is elevated beyond what this activity normally causes.', trend: [89,94,92,98,96,102,99,104,102,105] },
-  recovery: { label: 'Recovering', status: 'Cooling response started', score: 44, hr: 91, hrv: 34, skin: 35.6, ambient: 27.0, humidity: 54, activity: 'Resting', exposure: 48, recovery: 67, message: 'Your readings are moving back toward your personal baseline.', trend: [105,102,101,99,97,96,94,93,92,91] },
-  delayed: { label: 'Delayed recovery', status: 'Recovery is slower than usual', score: 76, hr: 99, hrv: 24, skin: 36.2, ambient: 27.0, humidity: 54, activity: 'Resting', exposure: 61, recovery: 24, message: 'Rest has started, but your body is not recovering at its usual rate.', trend: [105,103,102,102,101,101,100,100,99,99] },
+  baseline: { label: 'Baseline', status: 'Within your normal range', score: 14, hr: 74, hrv: 52, spo2: 98, skin: 33.1, ambient: 29.2, humidity: 54, activity: 'Resting', exposure: 4, recovery: 96, message: 'Your readings match your personal pattern.', trend: [72,73,72,74,73,74,74,73,74,74] },
+  exposure: { label: 'Heat exposure', status: 'Heat load is building', score: 41, hr: 88, hrv: 39, spo2: 97, skin: 35.4, ambient: 39.4, humidity: 71, activity: 'Walking', exposure: 24, recovery: 72, message: 'Your body is compensating for the hotter environment.', trend: [76,79,80,82,81,84,86,85,87,88] },
+  strain: { label: 'Heat strain', status: 'Unusual strain detected', score: 68, hr: 105, hrv: 23, spo2: 95, skin: 37.1, ambient: 39.4, humidity: 71, activity: 'Low activity', exposure: 42, recovery: 38, message: 'Your physiology is elevated beyond what this activity normally causes.', trend: [89,94,92,98,96,102,99,104,102,105] },
+  recovery: { label: 'Recovering', status: 'Cooling response started', score: 44, hr: 91, hrv: 34, spo2: 97, skin: 35.6, ambient: 27.0, humidity: 54, activity: 'Resting', exposure: 48, recovery: 67, message: 'Your readings are moving back toward your personal baseline.', trend: [105,102,101,99,97,96,94,93,92,91] },
+  delayed: { label: 'Delayed recovery', status: 'Recovery is slower than usual', score: 76, hr: 99, hrv: 24, spo2: 95, skin: 36.2, ambient: 27.0, humidity: 54, activity: 'Resting', exposure: 61, recovery: 24, message: 'Rest has started, but your body is not recovering at its usual rate.', trend: [105,103,102,102,101,101,100,100,99,99] },
 };
 
 const PHASE_ORDER = Object.keys(PHASES) as PhaseKey[];
+const NORMAL_SCENARIO: SensorPayload = {
+  heart_rate: 76,
+  spo2: 98,
+  temperature: 29,
+  humidity: 55,
+  activity: 0,
+};
+const ABNORMAL_SCENARIO: SensorPayload = {
+  heart_rate: 108,
+  spo2: 95,
+  temperature: 40,
+  humidity: 72,
+  activity: 0,
+};
 
 function Sparkline({ values, danger = false }: { values: number[]; danger?: boolean }) {
   const min = Math.min(...values) - 2;
@@ -71,7 +90,18 @@ export default function ThermalDashboard() {
   const [monitoring, setMonitoring] = useState(false);
   const [recoveryMinutes, setRecoveryMinutes] = useState(0);
   const [lastSync, setLastSync] = useState(2);
-  const data = PHASES[phase];
+  const [sensorFrame, setSensorFrame] = useState<SensorPayload | null>(null);
+  const [aiResult, setAiResult] = useState<PredictionResponse['ai_result'] | null>(null);
+  const [analysisState, setAnalysisState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const phaseData = PHASES[phase];
+  const data = sensorFrame ? {
+    ...phaseData,
+    hr: sensorFrame.heart_rate,
+    spo2: sensorFrame.spo2,
+    ambient: sensorFrame.temperature,
+    humidity: sensorFrame.humidity,
+    activity: sensorFrame.activity === 0 ? 'Resting' : `Level ${sensorFrame.activity}`,
+  } : phaseData;
 
   useEffect(() => {
     const syncTimer = window.setInterval(() => setLastSync(value => value >= 8 ? 1 : value + 1), 1800);
@@ -107,6 +137,38 @@ export default function ThermalDashboard() {
     setMonitoring(true);
   }
 
+  async function analyzeScenario(sensorData: SensorPayload, nextPhase: PhaseKey) {
+    setAnalysisState('loading');
+    setSensorFrame(null);
+    setAiResult(null);
+
+    try {
+      const response = await requestHeatPrediction(sensorData);
+      setSensorFrame(response.sensor_data);
+      setAiResult(response.ai_result);
+      setPhase(nextPhase);
+      setMonitoring(false);
+      setAnalysisState('success');
+    } catch {
+      setAnalysisState('error');
+    }
+  }
+
+  const aiDisplay = analysisState === 'loading'
+    ? 'Analyzing...'
+    : analysisState === 'error'
+      ? 'Backend unavailable'
+      : aiResult?.status ?? 'Run a demo scenario';
+  const aiTone = analysisState === 'error'
+    ? 'error'
+    : analysisState === 'loading'
+      ? 'loading'
+      : aiResult?.status.toUpperCase().includes('ABNORMAL')
+        ? 'abnormal'
+        : aiResult
+          ? 'normal'
+          : 'idle';
+
   return (
     <main className={styles.dashboard} data-phase={phase}>
       <aside className={styles.sidebar}>
@@ -136,8 +198,30 @@ export default function ThermalDashboard() {
 
         <div className={styles.phaseBar} aria-label="Demonstration state">
           <span>Simulate state</span>
-          <div>{PHASE_ORDER.map(key => <button key={key} className={phase === key ? styles.phaseActive : ''} onClick={() => { setPhase(key); setMonitoring(false); }}>{PHASES[key].label}</button>)}</div>
+          <div>{PHASE_ORDER.map(key => <button key={key} className={phase === key ? styles.phaseActive : ''} onClick={() => { setPhase(key); setMonitoring(false); setSensorFrame(null); setAiResult(null); setAnalysisState('idle'); }}>{PHASES[key].label}</button>)}</div>
         </div>
+
+        <section className={styles.aiPanel} data-state={aiTone} aria-live="polite">
+          <div className={styles.aiResultCopy}>
+            <span>FastAPI AI analysis</span>
+            <strong>{aiDisplay}</strong>
+            <p>{analysisState === 'error' ? 'Check that FastAPI is running on port 8000.' : analysisState === 'loading' ? 'Sending this sensor frame to the /predict model.' : aiResult ? 'Result returned by your local anomaly model.' : 'Choose a scenario to request a live prediction.'}</p>
+          </div>
+          <div className={styles.apiReadings}>
+            <div><span>Heart rate</span><strong>{sensorFrame?.heart_rate ?? '—'}<small>bpm</small></strong></div>
+            <div><span>SpO2</span><strong>{sensorFrame?.spo2 ?? '—'}<small>%</small></strong></div>
+            <div><span>Temperature</span><strong>{sensorFrame?.temperature ?? '—'}<small>°C</small></strong></div>
+            <div><span>Humidity</span><strong>{sensorFrame?.humidity ?? '—'}<small>%</small></strong></div>
+            <div><span>Activity</span><strong>{sensorFrame?.activity ?? '—'}</strong></div>
+          </div>
+          <div className={styles.aiActions}>
+            <div className={styles.rawScore}><span>Raw anomaly score</span><strong>{aiResult ? String(aiResult.score) : '—'}</strong></div>
+            <div className={styles.scenarioButtons}>
+              <button disabled={analysisState === 'loading'} onClick={() => analyzeScenario(NORMAL_SCENARIO, 'baseline')}>Normal scenario</button>
+              <button disabled={analysisState === 'loading'} onClick={() => analyzeScenario(ABNORMAL_SCENARIO, 'strain')}>Abnormal strain scenario</button>
+            </div>
+          </div>
+        </section>
 
         {view === 'overview' && (
           <div className={styles.overviewGrid}>
@@ -167,6 +251,7 @@ export default function ThermalDashboard() {
             <aside className={styles.vitalsColumn}>
               <div className={styles.panelHeading}><div><span>Live physiology</span><h2>Physical parameters</h2></div><span className={styles.sampleRate}>1 sample/s</span></div>
               <VitalCard label="Heart rate" value={data.hr} unit="bpm" detail="Activity adjusted" values={data.trend} danger={data.hr > 98} />
+              <VitalCard label="SpO2" value={data.spo2} unit="%" detail="Blood oxygen saturation" values={[98,98,97,98,97,97,96,97,96,data.spo2]} danger={data.spo2 < 96} />
               <VitalCard label="HRV" value={data.hrv} unit="ms" detail="Personal RMSSD" values={[52,48,44,40,38,34,31,29,26,data.hrv]} danger={data.hrv < 28} />
               <div className={styles.environmentRow}>
                 <div><span>Ambient</span><strong>{data.ambient.toFixed(1)}°</strong></div>
