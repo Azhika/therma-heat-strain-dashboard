@@ -8,7 +8,7 @@ A research prototype combining a web dashboard, physiological anomaly detection,
 
 **Next.js · TypeScript · FastAPI · scikit-learn**
 
-[Getting started](#getting-started) · [Architecture](#architecture) · [Documentation](#documentation)
+[Local setup](#local-setup-development-only) · [Architecture](#architecture) · [Documentation](#documentation)
 
 </div>
 
@@ -41,7 +41,9 @@ flowchart LR
     API --> Memory[Latest telemetry in memory]
 ```
 
-## Getting started
+## Local setup (development only)
+
+> **These instructions run Therma on your own computer.** `localhost` and `127.0.0.1` refer to the computer you are using, not a public website or hosted demo. The addresses below work only after you start the corresponding local servers.
 
 Use **Node.js 22** and **Python 3.12**. The commands below are for PowerShell.
 
@@ -61,7 +63,7 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m uvicorn api:app --reload
 ```
 
-Interactive API documentation is available at http://127.0.0.1:8000/docs.
+After starting the backend, open the **local API documentation** at `http://127.0.0.1:8000/docs` on the same computer.
 
 ### 2. Start the dashboard
 
@@ -73,7 +75,9 @@ Copy-Item .env.example .env.local
 npm run dev
 ```
 
-Open http://localhost:3000 for the desktop entry point or http://localhost:3000/mobile for the mobile interface. The supplied environment example connects to the local backend on port 8000.
+After starting the dashboard, open `http://localhost:3000` for the desktop entry point or `http://localhost:3000/mobile` for the mobile interface **on your own computer**. These are local development addresses, not public demo links. The supplied environment example connects to the local backend on port 8000.
+
+For hosting the application online, see the [Deployment guide](DEPLOYMENT.md).
 
 ### Development commands
 
